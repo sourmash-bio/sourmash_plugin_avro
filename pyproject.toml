@@ -1,7 +1,11 @@
 [project]
 name = "sourmash_plugin_avro"
+description = "sourmash plugin to store and save records in Avro format."
+readme = "README.md"
 requires-python = ">=3.8"
 version = "0.1"
+
+dependencies = ["avro"]
 
 [metadata]
 license = { text = "BSD 3-Clause License" }
