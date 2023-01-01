@@ -1,4 +1,10 @@
 "Read/write sketches with Apache Avro."
+
+# TODO:
+# * add support for num
+# * add support for other moltypes
+# * add support for abundances
+
 import sourmash
 
 from sourmash.index import LinearIndex
@@ -12,34 +18,70 @@ import avro.schema
 from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter
 
-sketch_schema_def = """
-{
-    "name": "Sketch",
+minhash_schema_def = """{
+    "namespace": "bio.sourmash.avro.schema",
+    "name": "MinHash",
     "type":"record",
     "fields":[
+        { "name": "num", "type": "int" },
         { "name": "scaled", "type": "int" },
         { "name": "ksize", "type": "int" },
-        { "name": "filename", "type": "string"},
-        { "name": "name", "type": "string"},
         { "name": "molecule", "type": {
-            "type": "enum",
-            "name": "moltype",
-            "symbols": ["DNA", "protein", "hp", "dayhoff"] }},
-       { "name":"hashes",
-            "type": {
-                "type": "array",  
-                "items":{
-                    "name":"hash",
-                    "type":"fixed",
-                    "size": 8
-                }
-            }
+          "type": "enum",
+          "name": "moltype",
+          "symbols": ["DNA", "protein", "hp", "dayhoff"] }
+        },
+        { "name":"hashes",
+          "type": {
+             "type": "array",  
+              "items":{
+                  "name":"hash",
+                   "type":"fixed",
+                   "size": 8
+              }
+           }
+        },
+        { "name":"abunds",
+          "type": {
+             "type": "array",  
+              "items":{
+                  "name":"abund",
+                   "type": "int"
+              }
+           }
         }
-    ] 
-}
-"""
-sketch_schema = avro.schema.parse(sketch_schema_def)
+    ]
+    }"""
 
+sig_schema_def = """{
+    "namespace": "bio.sourmash.avro.schema",
+    "name": "SourmashSignature",
+    "type":"record",
+    "fields":[
+       { "name": "filename", "type": "string"},
+       { "name": "name", "type": "string"}
+     ]
+    }
+"""
+sig_schema_def = """{
+    "namespace": "bio.sourmash.avro.schema",
+    "name": "SourmashSignature",
+    "type":"record",
+    "fields":[
+       { "name": "filename", "type": "string"},
+       { "name": "name", "type": "string"},
+       { "name": "minhash", "type": "bio.sourmash.avro.schema.MinHash" }
+     ]
+    }
+"""
+
+#minhash_schema = avro.schema.parse(minhash_schema_def)
+
+combined = minhash_schema_def + ",\n" + sig_schema_def
+print('XXX', combined[800:870])
+schema = avro.schema.parse(minhash_schema_def + ",\n" + sig_schema_def)
+#schema = avro.schema.parse(minhash_schema_def, sig_schema_def)
+#sketch_schema = avro.schema.parse(minhash_schema_def)
 
 ###
 
@@ -56,11 +98,12 @@ def load_sketches(location, *args, **kwargs):
                 else:
                     raise Exception
                     
-                mh = sourmash.MinHash(n=0,
+                mh = sourmash.MinHash(n=sketch['num'],
                                       ksize=sketch['ksize'],
                                       scaled=sketch['scaled'])
 
                 hashes = [ int.from_bytes(h, 'big') for h in sketch['hashes'] ]
+                abunds = [ 0 for h in hashes ]
                 mh.add_many(hashes)
 
                 ss = sourmash.SourmashSignature(mh,
@@ -93,24 +136,23 @@ class SaveSignatures_AvroFile(_BaseSaveSignaturesToLocation):
 
     def close(self):
         writer = DataFileWriter(open(self.location, "wb"),
-                                DatumWriter(), sketch_schema)
+                                DatumWriter(), schema)
 
         for ss0 in self.keep:
             for ss in _get_signatures_from_rust([ss0]):
                 mh = ss.minhash
-                ksize = mh.ksize
-                scaled = mh.scaled
                 hashes = [ h.to_bytes(8, 'big') for h in mh.hashes ]
-                name = ss.name
-                filename = ss.filename
-                molecule = mh.moltype
+                abunds = [ 0 for h in hashes ]
 
-                writer.append(dict(ksize=ksize,
-                                   scaled=scaled,
-                                   hashes=hashes,
-                                   name=name,
-                                   filename=filename,
-                                   molecule=molecule))
+                minhash_d = dict(ksize=mh.ksize,
+                                           num=mh.num,
+                                           scaled=mh.scaled,
+                                           hashes=hashes,
+                                           abunds=abunds,
+                                           molecule=mh.moltype)
+                writer.append(dict(minhash=minhash_d,
+                                   name=ss.name,
+                                   filename=ss.filename))
             
         writer.close()
 
