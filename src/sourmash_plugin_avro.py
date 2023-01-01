@@ -18,9 +18,16 @@ import avro.schema
 from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter
 
-minhash_schema_def = """{
-    "namespace": "bio.sourmash.avro.schema",
+#    "namespace": "bio.sourmash.avro.schema",
+sig_schema_def = """{
+    "name": "SourmashSignature",
+    "type":"record",
+    "fields":[
+       { "name": "filename", "type": "string"},
+       { "name": "name", "type": "string"},
+       {
     "name": "MinHash",
+    "type": {
     "type":"record",
     "fields":[
         { "name": "num", "type": "int" },
@@ -51,37 +58,13 @@ minhash_schema_def = """{
            }
         }
     ]
-    }"""
-
-sig_schema_def = """{
-    "namespace": "bio.sourmash.avro.schema",
-    "name": "SourmashSignature",
-    "type":"record",
-    "fields":[
-       { "name": "filename", "type": "string"},
-       { "name": "name", "type": "string"}
-     ]
-    }
-"""
-sig_schema_def = """{
-    "namespace": "bio.sourmash.avro.schema",
-    "name": "SourmashSignature",
-    "type":"record",
-    "fields":[
-       { "name": "filename", "type": "string"},
-       { "name": "name", "type": "string"},
-       { "name": "minhash", "type": "bio.sourmash.avro.schema.MinHash" }
-     ]
-    }
+    } }
+]
+}
 """
 
-#minhash_schema = avro.schema.parse(minhash_schema_def)
-
-combined = minhash_schema_def + ",\n" + sig_schema_def
-print('XXX', combined[800:870])
-schema = avro.schema.parse(minhash_schema_def + ",\n" + sig_schema_def)
-#schema = avro.schema.parse(minhash_schema_def, sig_schema_def)
-#sketch_schema = avro.schema.parse(minhash_schema_def)
+schema = avro.schema.parse(open('signature.avsc', 'rb').read())
+#sig_schema_def)
 
 ###
 
