@@ -1,5 +1,9 @@
 """
 Tests for the sourmash avro read/write plugin.
+
+TODO:
+* test num
+* test protein, hp, dayhoff
 """
 import os
 import pytest
@@ -39,7 +43,22 @@ def test_sourmash_save_avro(runtmp):
 
 
 def test_sourmash_load_avro(runtmp):
-    # can we load w/sourmash?
+    # can we load w/sourmash? check object equality.
+    sig47 = utils.get_test_data('47.fa.sig')
+    avro_out = utils.get_test_data('47.avrosig')
+
+    # ok, load using sourmash and compare.
+    json_sig = sourmash.load_file_as_index(sig47)
+    json_sig = list(json_sig.signatures())[0]
+
+    avro_sig = sourmash.load_file_as_index(avro_out)
+    avro_sig = list(avro_sig.signatures())[0]
+
+    assert json_sig == avro_sig
+
+
+def test_sourmash_load_avro_describe(runtmp):
+    # can we load w/sourmash? check output of 'describe'
     sig47_avro = utils.get_test_data('47.avrosig')
 
     runtmp.sourmash('sig', 'describe', sig47_avro)
@@ -62,7 +81,7 @@ signature license: CC0""".splitlines()
 
 
 def test_sourmash_save_avro_abund(runtmp):
-    # make sure .avrosig => avro file.
+    # check abundance stuff
     sig47 = utils.get_test_data('abund/47.fa.sig')
     avro_out = runtmp.output('47.abund.avrosig')
 
