@@ -8,38 +8,39 @@
        { "name": "filename", "type": "string"},
        { "name": "name", "type": "string"},
        { "name": "license", "type": "string"},
+
        { "name": "minhash",
          "type": {
-         "type": "record",
-         "name": "MinHash",
-         "fields":[
-           { "name": "num", "type": "int" },
-           { "name": "ksize", "type": "int" },
-           { "name": "seed", "type": "int" },
-           { "name":"mins",
-             "type": {
-                "type": "array",  
-                 "items":{
-                     "name":"hash",
-                     "type":"fixed",
-                     "size": 8
-                 }
-              }
-           },
-           { "name": "md5sum", "type": "string" },
-           { "name":"abunds",
-             "type": {
-                 "type": "array",  
-                 "items":{
+           "type": "record",
+           "name": "MinHash",
+           "fields":[
+             { "name": "num", "type": "int" },
+             { "name": "ksize", "type": "int" },
+             { "name": "seed", "type": "int" },
+             { "name":"mins",
+               "type": {
+                  "type": "array",  
+                   "items":{
+                       "name":"hash",
+                       "type":"fixed",
+                       "size": 8
+                   }
+                }
+             },
+             { "name": "md5sum", "type": "string" },
+             { "name":"abunds",
+               "type": {
+                  "type": "array",  
+                  "items":{
                      "name":"abund",
                      "type":"int"
-                 }
-             }
-           },
+                   }
+                }
+             },
            { "name": "molecule", "type": "string" }
-             
-         ]
+           ]
+         }
        }
-       }
+ 
        ]
 }
