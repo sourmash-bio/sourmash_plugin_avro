@@ -50,10 +50,12 @@ def load_sketches(location, *args, **kwargs):
                         is_abund = False
                         abunds = None
 
+                    max_hash = int.from_bytes(minhash['max_hash'], 'big')
+
                     mh = sourmash.MinHash(n=minhash['num'],
                                           ksize=minhash['ksize'],
                                           track_abundance=is_abund,
-                                          scaled=1000) # @CTB
+                                          max_hash=max_hash)
 
                     if is_abund:
                         abunds = dict(( (k, v) for k, v in zip(hashes,
@@ -104,8 +106,7 @@ class SaveSignatures_AvroFile(_BaseSaveSignaturesToLocation):
 
                 minhash_d = dict(ksize=mh.ksize,
                                  num=mh.num,
-#           { "name": "max_hash", "type": "fixed", "size": 8 },
- #                                 max_hash=mh._max_hash.to_bytes(8, 'big'),
+                                 max_hash=mh._max_hash.to_bytes(8, 'big'),
                                  mins=hashes,
                                  abunds=abunds,
                                  molecule=mh.moltype,

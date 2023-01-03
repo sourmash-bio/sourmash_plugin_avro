@@ -20,6 +20,7 @@
              { "name": "num", "type": "int" },
              { "name": "ksize", "type": "int" },
              { "name": "seed", "type": "int" },
+             { "name": "max_hash", "type": { "name": "ulong", "type": "fixed", "size": 8 } },
              { "name":"mins",
                "type": {
                   "type": "array",  
