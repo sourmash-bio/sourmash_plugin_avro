@@ -18,53 +18,12 @@ import avro.schema
 from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter
 
-#    "namespace": "bio.sourmash.avro.schema",
-sig_schema_def = """{
-    "name": "SourmashSignature",
-    "type":"record",
-    "fields":[
-       { "name": "filename", "type": "string"},
-       { "name": "name", "type": "string"},
-       {
-    "name": "MinHash",
-    "type": {
-    "type":"record",
-    "fields":[
-        { "name": "num", "type": "int" },
-        { "name": "scaled", "type": "int" },
-        { "name": "ksize", "type": "int" },
-        { "name": "molecule", "type": {
-          "type": "enum",
-          "name": "moltype",
-          "symbols": ["DNA", "protein", "hp", "dayhoff"] }
-        },
-        { "name":"hashes",
-          "type": {
-             "type": "array",  
-              "items":{
-                  "name":"hash",
-                   "type":"fixed",
-                   "size": 8
-              }
-           }
-        },
-        { "name":"abunds",
-          "type": {
-             "type": "array",  
-              "items":{
-                  "name":"abund",
-                   "type": "int"
-              }
-           }
-        }
-    ]
-    } }
-]
-}
+sig_schema_def = """
+...
 """
 
+# load from file for easier editing... at least for now!
 schema = avro.schema.parse(open('signature.avsc', 'rb').read())
-#sig_schema_def)
 
 ###
 
@@ -75,17 +34,19 @@ def load_sketches(location, *args, **kwargs):
 
             siglist = []
             for sketch in reader:
-                moltype = sketch['molecule']
-                if moltype == 'DNA':
+                minhash = sketch['minhash']
+                moltype = minhash['molecule']
+                if moltype == 'DNA': # @CTB
                     pass
                 else:
                     raise Exception
                     
-                mh = sourmash.MinHash(n=sketch['num'],
-                                      ksize=sketch['ksize'],
-                                      scaled=sketch['scaled'])
+                mh = sourmash.MinHash(n=minhash['num'],
+                                      ksize=minhash['ksize'],
+                                      scaled=1000) # @CTB
 
-                hashes = [ int.from_bytes(h, 'big') for h in sketch['hashes'] ]
+                hashes = [ int.from_bytes(h, 'big') for h in minhash['mins'] ]
+                # @CTB
                 abunds = [ 0 for h in hashes ]
                 mh.add_many(hashes)
 
@@ -128,14 +89,24 @@ class SaveSignatures_AvroFile(_BaseSaveSignaturesToLocation):
                 abunds = [ 0 for h in hashes ]
 
                 minhash_d = dict(ksize=mh.ksize,
-                                           num=mh.num,
-                                           scaled=mh.scaled,
-                                           hashes=hashes,
-                                           abunds=abunds,
-                                           molecule=mh.moltype)
-                writer.append(dict(minhash=minhash_d,
-                                   name=ss.name,
-                                   filename=ss.filename))
+                                 num=mh.num,
+#           { "name": "max_hash", "type": "fixed", "size": 8 },
+ #                                 max_hash=mh._max_hash.to_bytes(8, 'big'),
+                                 mins=hashes,
+                                 abunds=abunds,
+                                 molecule=mh.moltype,
+                                 seed=mh.seed,
+                                 md5sum="")
+
+                sig_d = dict(email='',
+                             hash_function='0.murmur64',
+                             license='CC0',
+                             name=ss.name,
+                             filename=ss.filename,
+                             minhash=minhash_d)
+                sig_d['class'] = 'sourmash_signature'
+
+                writer.append(sig_d)
             
         writer.close()
 
