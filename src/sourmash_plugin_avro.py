@@ -33,27 +33,29 @@ def load_sketches(location, *args, **kwargs):
             reader = DataFileReader(fp, DatumReader())
 
             siglist = []
-            for sketch in reader:
-                minhash = sketch['minhash']
-                moltype = minhash['molecule']
-                if moltype == 'DNA': # @CTB
-                    pass
-                else:
-                    raise Exception
-                    
-                mh = sourmash.MinHash(n=minhash['num'],
-                                      ksize=minhash['ksize'],
-                                      scaled=1000) # @CTB
+            for signature in reader:
+                sketches = signature['signatures']
 
-                hashes = [ int.from_bytes(h, 'big') for h in minhash['mins'] ]
-                # @CTB
-                abunds = [ 0 for h in hashes ]
-                mh.add_many(hashes)
+                for minhash in sketches:
+                    moltype = minhash['molecule']
+                    if moltype == 'DNA': # @CTB
+                        pass
+                    else:
+                        raise Exception
 
-                ss = sourmash.SourmashSignature(mh,
-                                                name=sketch['name'],
-                                                filename=sketch['filename'])
-                siglist.append(ss)
+                    mh = sourmash.MinHash(n=minhash['num'],
+                                          ksize=minhash['ksize'],
+                                          scaled=1000) # @CTB
+
+                    hashes = [ int.from_bytes(h, 'big') for h in minhash['mins'] ]
+                    # @CTB
+                    abunds = [ 0 for h in hashes ]
+                    mh.add_many(hashes)
+
+                    ss = sourmash.SourmashSignature(mh,
+                                                    name=signature['name'],
+                                                    filename=signature['filename'])
+                    siglist.append(ss)
 
         return LinearIndex(siglist)
 
@@ -103,7 +105,7 @@ class SaveSignatures_AvroFile(_BaseSaveSignaturesToLocation):
                              license='CC0',
                              name=ss.name,
                              filename=ss.filename,
-                             minhash=minhash_d)
+                             signatures=[minhash_d])
                 sig_d['class'] = 'sourmash_signature'
 
                 writer.append(sig_d)

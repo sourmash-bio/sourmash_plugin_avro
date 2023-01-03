@@ -9,10 +9,13 @@
        { "name": "name", "type": "string"},
        { "name": "license", "type": "string"},
 
-       { "name": "minhash",
+       { "name": "signatures",
          "type": {
-           "type": "record",
+            "type": "array",
+            "items": {
+
            "name": "MinHash",
+           "type": "record",
            "fields":[
              { "name": "num", "type": "int" },
              { "name": "ksize", "type": "int" },
@@ -40,6 +43,7 @@
            { "name": "molecule", "type": "string" }
            ]
          }
+       }
        }
  
        ]
