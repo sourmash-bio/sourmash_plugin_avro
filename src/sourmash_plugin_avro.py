@@ -43,14 +43,24 @@ def load_sketches(location, *args, **kwargs):
                     else:
                         raise Exception
 
+                    hashes = [ int.from_bytes(h, 'big') for h in minhash['mins'] ]
+                    abunds = minhash['abunds']
+                    is_abund = True
+                    if max(abunds) == 0:
+                        is_abund = False
+                        abunds = None
+
                     mh = sourmash.MinHash(n=minhash['num'],
                                           ksize=minhash['ksize'],
+                                          track_abundance=is_abund,
                                           scaled=1000) # @CTB
 
-                    hashes = [ int.from_bytes(h, 'big') for h in minhash['mins'] ]
-                    # @CTB
-                    abunds = [ 0 for h in hashes ]
-                    mh.add_many(hashes)
+                    if is_abund:
+                        abunds = dict(( (k, v) for k, v in zip(hashes,
+                                                               abunds) ))
+                        mh.set_abundances(abunds)
+                    else:
+                        mh.add_many(hashes)
 
                     ss = sourmash.SourmashSignature(mh,
                                                     name=signature['name'],
@@ -87,8 +97,10 @@ class SaveSignatures_AvroFile(_BaseSaveSignaturesToLocation):
         for ss0 in self.keep:
             for ss in _get_signatures_from_rust([ss0]):
                 mh = ss.minhash
-                hashes = [ h.to_bytes(8, 'big') for h in mh.hashes ]
-                abunds = [ 0 for h in hashes ]
+
+                hash_d = mh.hashes
+                hashes = [ h.to_bytes(8, 'big') for h in hash_d ]
+                abunds = [ hash_d[h] for h in hash_d ]
 
                 minhash_d = dict(ksize=mh.ksize,
                                  num=mh.num,
