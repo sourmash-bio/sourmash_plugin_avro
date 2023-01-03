@@ -1,9 +1,7 @@
 "Read/write sketches with Apache Avro."
 
 # TODO:
-# * add support for num
 # * add support for other moltypes
-# * add support for abundances
 
 import sourmash
 
@@ -19,11 +17,62 @@ from avro.datafile import DataFileReader, DataFileWriter
 from avro.io import DatumReader, DatumWriter
 
 sig_schema_def = """
-...
+{
+    "name": "Signature",
+    "type":"record",
+    "fields":[
+       { "name": "class", "type": "string"},
+       { "name": "email", "type": "string"},
+       { "name": "hash_function", "type": "string"},
+       { "name": "filename", "type": "string"},
+       { "name": "name", "type": "string"},
+       { "name": "license", "type": "string"},
+
+       { "name": "signatures",
+         "type": {
+            "type": "array",
+            "items": {
+
+           "name": "MinHash",
+           "type": "record",
+           "fields":[
+             { "name": "num", "type": "int" },
+             { "name": "ksize", "type": "int" },
+             { "name": "seed", "type": "int" },
+             { "name": "max_hash", "type": { "name": "ulong", "type": "fixed", "size": 8 } },
+             { "name":"mins",
+               "type": {
+                  "type": "array",  
+                   "items":{
+                       "name":"hash",
+                       "type":"fixed",
+                       "size": 8
+                   }
+                }
+             },
+             { "name": "md5sum", "type": "string" },
+             { "name":"abunds",
+               "type": {
+                  "type": "array",  
+                  "items":{
+                     "name":"abund",
+                     "type":"int"
+                   }
+                }
+             },
+           { "name": "molecule", "type": "string" }
+           ]
+         }
+       }
+       }
+ 
+       ]
+}
 """
 
-# load from file for easier editing... at least for now!
-schema = avro.schema.parse(open('signature.avsc', 'rb').read())
+# @CTB load from file for easier editing... at least for now!
+# schema = avro.schema.parse(open('signature.avsc', 'rb').read())
+schema = avro.schema.parse(sig_schema_def)
 
 ###
 
@@ -46,7 +95,7 @@ def load_sketches(location, *args, **kwargs):
                     hashes = [ int.from_bytes(h, 'big') for h in minhash['mins'] ]
                     abunds = minhash['abunds']
                     is_abund = True
-                    if max(abunds) == 0:
+                    if max(abunds) == 1:
                         is_abund = False
                         abunds = None
 
