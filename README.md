@@ -1,4 +1,4 @@
-# Apache Avro plugin supporting sourmash signature/sketch storage
+# sourmash signature/sketch storage in the Apache Avro format.
 
 This is an **experimental** plugin to support Apache Avro storage
 of sourmash sketches.
