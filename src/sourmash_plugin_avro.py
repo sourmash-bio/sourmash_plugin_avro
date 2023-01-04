@@ -8,9 +8,8 @@ import sourmash
 from sourmash.index import LinearIndex
 from sourmash.logging import debug_literal
 
-# CTB: remove _ prefix?
-from sourmash.sourmash_args import _BaseSaveSignaturesToLocation
-from sourmash.sourmash_args import _get_signatures_from_rust
+from sourmash.save_load import (Base_SaveSignaturesToLocation,
+                                _get_signatures_from_rust)
 
 import avro.schema
 from avro.datafile import DataFileReader, DataFileWriter
@@ -123,7 +122,7 @@ def load_sketches(location, *args, **kwargs):
 load_sketches.priority = 5
 
 
-class SaveSignatures_AvroFile(_BaseSaveSignaturesToLocation):
+class SaveSignatures_AvroFile(Base_SaveSignaturesToLocation):
     "Save signatures to an Apache Avro file." 
     def __init__(self, location):
         super().__init__(location)
