@@ -88,11 +88,18 @@ def load_sketches(location, *args, **kwargs):
                 sketches = signature['signatures']
                 moltype = signature['hash_function']
 
+                is_protein = dayhoff = hp = False
                 for minhash in sketches:
-                    if moltype.upper() == 'DNA': # @CTB
+                    if moltype.upper() == 'DNA':
                         pass
+                    elif moltype == 'protein':
+                        is_protein = True
+                    elif moltype == 'dayhoff':
+                        dayhoff = True
+                    elif moltype == 'hp':
+                        hp = True
                     else:
-                        raise Exception
+                        raise Exception # should never happen
 
                     hashes = [ int.from_bytes(h, 'big') for h in minhash['mins'] ]
                     abunds = minhash['abunds']
@@ -106,7 +113,10 @@ def load_sketches(location, *args, **kwargs):
                     mh = sourmash.MinHash(n=minhash['num'],
                                           ksize=minhash['ksize'],
                                           track_abundance=is_abund,
-                                          max_hash=max_hash)
+                                          max_hash=max_hash,
+                                          is_protein=is_protein,
+                                          dayhoff=dayhoff,
+                                          hp=hp)
 
                     if is_abund:
                         abunds = dict(( (k, v) for k, v in zip(hashes,
@@ -169,7 +179,7 @@ class SaveSignatures_AvroFile(Base_SaveSignaturesToLocation):
 
                 sig_d = dict(email='',
                              license='CC0',
-                             hash_function="dna",
+                             hash_function=mh.moltype,
                              name=ss.name,
                              filename=ss.filename,
                              signatures=[minhash_d],
