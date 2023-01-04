@@ -8,6 +8,7 @@
        { "name": "filename", "type": "string"},
        { "name": "name", "type": "string"},
        { "name": "license", "type": "string"},
+       { "name": "version", "type": "float" },
 
        { "name": "signatures",
          "type": {
@@ -21,6 +22,7 @@
              { "name": "ksize", "type": "int" },
              { "name": "seed", "type": "int" },
              { "name": "max_hash", "type": { "name": "ulong", "type": "fixed", "size": 8 } },
+             { "name": "md5sum", "type": "string" },
              { "name":"mins",
                "type": {
                   "type": "array",  
@@ -31,7 +33,6 @@
                    }
                 }
              },
-             { "name": "md5sum", "type": "string" },
              { "name":"abunds",
                "type": {
                   "type": "array",  
@@ -40,8 +41,7 @@
                      "type":"int"
                    }
                 }
-             },
-           { "name": "molecule", "type": "string" }
+             }
            ]
          }
        }

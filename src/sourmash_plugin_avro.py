@@ -26,6 +26,7 @@ sig_schema_def = """
        { "name": "filename", "type": "string"},
        { "name": "name", "type": "string"},
        { "name": "license", "type": "string"},
+       { "name": "version", "type": "float" },
 
        { "name": "signatures",
          "type": {
@@ -39,6 +40,7 @@ sig_schema_def = """
              { "name": "ksize", "type": "int" },
              { "name": "seed", "type": "int" },
              { "name": "max_hash", "type": { "name": "ulong", "type": "fixed", "size": 8 } },
+             { "name": "md5sum", "type": "string" },
              { "name":"mins",
                "type": {
                   "type": "array",  
@@ -49,7 +51,6 @@ sig_schema_def = """
                    }
                 }
              },
-             { "name": "md5sum", "type": "string" },
              { "name":"abunds",
                "type": {
                   "type": "array",  
@@ -58,8 +59,7 @@ sig_schema_def = """
                      "type":"int"
                    }
                 }
-             },
-           { "name": "molecule", "type": "string" }
+             }
            ]
          }
        }
@@ -69,11 +69,13 @@ sig_schema_def = """
 }
 """
 
-# @CTB load from file for easier editing... at least for now!
-# schema = avro.schema.parse(open('signature.avsc', 'rb').read())
 schema = avro.schema.parse(sig_schema_def)
 
 ###
+
+#
+# load_from plugin - supports loading .avrosig files.
+#
 
 def load_sketches(location, *args, **kwargs):
     if location and location.endswith('.avrosig'):
@@ -82,11 +84,12 @@ def load_sketches(location, *args, **kwargs):
 
             siglist = []
             for signature in reader:
+                assert round(signature['version'], 1) == 0.4, signature['version']
                 sketches = signature['signatures']
+                moltype = signature['hash_function']
 
                 for minhash in sketches:
-                    moltype = minhash['molecule']
-                    if moltype == 'DNA': # @CTB
+                    if moltype.upper() == 'DNA': # @CTB
                         pass
                     else:
                         raise Exception
@@ -121,6 +124,10 @@ def load_sketches(location, *args, **kwargs):
 
 load_sketches.priority = 5
 
+
+#
+# save_to plugin - supports output to .avrosig.
+#
 
 class SaveSignatures_AvroFile(Base_SaveSignaturesToLocation):
     "Save signatures to an Apache Avro file." 
@@ -157,16 +164,16 @@ class SaveSignatures_AvroFile(Base_SaveSignaturesToLocation):
                                  max_hash=mh._max_hash.to_bytes(8, 'big'),
                                  mins=hashes,
                                  abunds=abunds,
-                                 molecule=mh.moltype,
                                  seed=mh.seed,
                                  md5sum="")
 
                 sig_d = dict(email='',
-                             hash_function='0.murmur64',
                              license='CC0',
+                             hash_function="dna",
                              name=ss.name,
                              filename=ss.filename,
-                             signatures=[minhash_d])
+                             signatures=[minhash_d],
+                             version=0.4)
                 sig_d['class'] = 'sourmash_signature'
 
                 writer.append(sig_d)
