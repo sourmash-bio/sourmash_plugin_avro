@@ -1,8 +1,5 @@
 """
 Tests for the sourmash avro read/write plugin.
-
-TODO:
-* test num
 """
 import os
 import pytest
@@ -94,6 +91,29 @@ def test_sourmash_save_avro_abund(runtmp):
 
     # ok, load using sourmash and compare.
     json_sig = sourmash.load_file_as_index(sig47)
+    json_sig = list(json_sig.signatures())[0]
+
+    avro_sig = sourmash.load_file_as_index(avro_out)
+    avro_sig = list(avro_sig.signatures())[0]
+
+    assert json_sig == avro_sig
+
+
+def test_sourmash_load_save_num(runtmp):
+    # check abundance stuff
+    sigfile = utils.get_test_data('num/47.fa.sig')
+    avro_out = runtmp.output('out.avrosig')
+
+    runtmp.sourmash('sig', 'cat', sigfile, '-o', avro_out)
+
+    # legit avro?
+    with open(avro_out, 'rb') as fp:
+        reader = DataFileReader(fp, DatumReader())
+
+        sigs = list(reader)
+
+    # ok, load using sourmash and compare.
+    json_sig = sourmash.load_file_as_index(sigfile)
     json_sig = list(json_sig.signatures())[0]
 
     avro_sig = sourmash.load_file_as_index(avro_out)
