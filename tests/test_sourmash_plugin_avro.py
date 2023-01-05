@@ -3,7 +3,6 @@ Tests for the sourmash avro read/write plugin.
 
 TODO:
 * test num
-* test protein, hp, dayhoff
 """
 import os
 import pytest
